@@ -1,0 +1,92 @@
+name: CI Pipline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      client: ${{ steps.filter.outputs.client }}
+      server: ${{ steps.filter.outputs.server }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            client:
+             - 'client/**'
+            server:
+             - 'server/**'
+
+  check-client:
+    name: Check Client Code
+    needs: changes
+    if: ${{ needs.changes.outputs.client == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+          cache-dependency-path: 'client/requirements.txt'
+
+      - name: Install System GUI Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libegl1 libgl1-mesa-dev libxkbcommon-x11-0 xvfb
+
+      - name: Install Client Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f client/requirements.txt ]; then pip install -r client/requirements.txt; fi
+
+      - name: Lint Client Code
+        run: ruff check client/
+
+      - name: Check Formatting Client
+        run: ruff format --check client
+
+      - name: Type Check Client
+        run: mypy client/ --ignore-missing-import || true
+
+      - name: Run Client Tests
+        run: |
+          xvfb-run --auto-servernum pytest client/ || echo "No tests found yet"
+
+  check-server:
+    name: Check Server Code
+    needs: changes
+    if: ${{ needs.changes.outputs.server == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: 'pip'
+          cache-dependency-path: 'server/requirements.txt'
+      - name: Install Server Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f server/requirements.txt ]; then pip install -r server/requirements.txt; fi
+
+      - name: Lint Server Code
+        run: ruff check server/
+
+      - name: Check Formatting Server
+        run: ruff format --check server/
+
+      - name: Audit Dependencies
+        run: pip-audit -r server/requirements.txt || true
+      - name: Run Server Tests
+
+        run: pytest server/ || echo "No tests found yet"

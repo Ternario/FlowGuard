@@ -15,7 +15,7 @@ class Sidebar(QWidget):
         layout.addWidget(title)
 
         self.menu_list = QListWidget()
-        self.menu_list.addItem('Today\'s Tasks')
+        self.menu_list.addItem("Today's Tasks")
         self.menu_list.addItem('Tasks')
         self.menu_list.addItem('Analytics (Soon)')
         self.menu_list.addItem('Settings (Soon)')

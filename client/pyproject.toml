@@ -1,0 +1,18 @@
+[tool.ruff]
+# Обязательно укажите базовую секцию
+target-version = "py311"
+
+[tool.ruff.format]
+# Это правило форматирует обычные строки в одинарные кавычки ''
+quote-style = "single"
+# Это правило ОСТАВЛЯЕТ двойные кавычки в docstrings """ """
+docstring-code-format = false
+
+[tool.ruff.lint]
+select = ["Q"]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "single"
+docstring-quotes = "double"
+multiline-quotes = "double"
+avoid-escape = true
