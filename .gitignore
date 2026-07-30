@@ -1,0 +1,14 @@
+
+.vscode/
+venv/
+.venv/
+*.env
+*.env.*
+*.db
+*.log
+*.pot
+*.pyc
+
+__pycache__/
+
+.idea/
