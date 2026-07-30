@@ -2,7 +2,10 @@ from datetime import date
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
-    QWidget, QHBoxLayout, QPushButton, QDialog,
+    QWidget,
+    QHBoxLayout,
+    QPushButton,
+    QDialog,
 )
 
 from src.ui.widgets.task_create_dialog import TaskCreateDialog

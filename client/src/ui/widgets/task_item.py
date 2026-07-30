@@ -1,6 +1,13 @@
 from datetime import datetime, date, time
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QSizePolicy
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QSizePolicy,
+)
 
 
 class TaskItem(QWidget):
@@ -16,7 +23,9 @@ class TaskItem(QWidget):
 
         text_wrapper = QWidget()
         text_wrapper.setMinimumWidth(0)
-        text_wrapper.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        text_wrapper.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
+        )
 
         text_layout = QVBoxLayout(text_wrapper)
 
@@ -32,14 +41,20 @@ class TaskItem(QWidget):
 
         time_wrapper = QWidget()
         time_wrapper.setMinimumWidth(0)
-        time_wrapper.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        time_wrapper.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
+        )
         timee_layout = QVBoxLayout(time_wrapper)
 
         scheduled_start_dt = self._format_or_fact_dt(task.start_time)
         scheduled_end_dt = self._format_or_fact_dt(task.end_time)
 
-        actual_start_dt = self._format_or_fact_dt(completion.started_at) if completion else '-'
-        actual_end_dt = self._format_or_fact_dt(completion.completed_at) if completion else '-'
+        actual_start_dt = (
+            self._format_or_fact_dt(completion.started_at) if completion else '-'
+        )
+        actual_end_dt = (
+            self._format_or_fact_dt(completion.completed_at) if completion else '-'
+        )
 
         label_start_dt = QLabel(
             f'<b>Start:</b> Scheduled at: {scheduled_start_dt} || Actual started at: {actual_start_dt}'
@@ -59,7 +74,9 @@ class TaskItem(QWidget):
 
         btn_wrapper = QWidget()
         btn_wrapper.setMinimumWidth(0)
-        btn_wrapper.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        btn_wrapper.setSizePolicy(
+            QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred
+        )
         btn_layout = QHBoxLayout(btn_wrapper)
         btn_start = QPushButton('Start')
         btn_start.setFixedWidth(90)
@@ -108,8 +125,7 @@ class TaskItem(QWidget):
         label_description.setStyleSheet('font-size: 18px;')
         label_description.setWordWrap(True)
         label_description.setSizePolicy(
-            QSizePolicy.Policy.Preferred,
-            QSizePolicy.Policy.Minimum
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum
         )
 
         text_layout.addWidget(label_description)

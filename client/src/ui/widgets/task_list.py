@@ -1,7 +1,14 @@
 from datetime import date
 
 from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QListWidget, QListWidgetItem, QMessageBox, QHBoxLayout, QLabel, QPushButton
+    QWidget,
+    QVBoxLayout,
+    QListWidget,
+    QListWidgetItem,
+    QMessageBox,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
 )
 
 from src.core.services.local_tasks import TaskService
@@ -70,7 +77,11 @@ class TaskList(QWidget):
     def on_date_changed(self, new_date: date) -> None:
         self.selected_date = new_date
 
-        is_today = 'today' if self.selected_date == date.today() else f' {self.selected_date.strftime('%d.%m.%Y')}'
+        is_today = (
+            'today'
+            if self.selected_date == date.today()
+            else f' {self.selected_date.strftime("%d.%m.%Y")}'
+        )
 
         self.header_label.setText(f'Tasks for {is_today}:')
         self.refresh_tasks()
@@ -84,14 +95,10 @@ class TaskList(QWidget):
         try:
             with self.session_factory() as db:
                 service = TaskService(db)
-                service.create_task(
-                    task_dto
-                )
+                service.create_task(task_dto)
 
             self.refresh_tasks()
-            QMessageBox.information(
-                self, 'Success', 'Task created successfully!'
-            )
+            QMessageBox.information(self, 'Success', 'Task created successfully!')
 
         except Exception as e:
             QMessageBox.critical(
@@ -110,7 +117,7 @@ class TaskList(QWidget):
                 widget = TaskItem(
                     task=task,
                     on_start_cb=self.handle_start_task,
-                    on_complete_cb=self.handle_complete_task
+                    on_complete_cb=self.handle_complete_task,
                 )
 
                 item.setSizeHint(widget.sizeHint())

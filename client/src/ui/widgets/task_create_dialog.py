@@ -3,8 +3,22 @@ from typing import Optional
 
 from PyQt6.QtCore import QDate, QTime
 from PyQt6.QtWidgets import (
-    QDialog, QVBoxLayout, QFormLayout, QLineEdit, QTextEdit, QDateEdit, QCheckBox, QHBoxLayout, QTimeEdit, QLabel,
-    QComboBox, QSpinBox, QWidget, QPushButton, QMessageBox, QStackedWidget
+    QDialog,
+    QVBoxLayout,
+    QFormLayout,
+    QLineEdit,
+    QTextEdit,
+    QDateEdit,
+    QCheckBox,
+    QHBoxLayout,
+    QTimeEdit,
+    QLabel,
+    QComboBox,
+    QSpinBox,
+    QWidget,
+    QPushButton,
+    QMessageBox,
+    QStackedWidget,
 )
 from pydantic import ValidationError
 
@@ -100,7 +114,15 @@ class TaskCreateDialog(QDialog):
         weekly_layout.setContentsMargins(0, 0, 0, 0)
 
         self.week_days_checkbox = {}
-        days_names = [('Mon', 0), ('Tue', 1), ('Wed', 2), ('Thu', 3), ('Fri', 4), ('Sat', 5), ('Sun', 6)]
+        days_names = [
+            ('Mon', 0),
+            ('Tue', 1),
+            ('Wed', 2),
+            ('Thu', 3),
+            ('Fri', 4),
+            ('Sat', 5),
+            ('Sun', 6),
+        ]
 
         for name, day_num in days_names:
             chk = QCheckBox(name)
@@ -130,7 +152,9 @@ class TaskCreateDialog(QDialog):
         main_layout.addLayout(form_layout)
         main_layout.addStretch()
 
-        self.combo_recurrence_type.currentIndexChanged.connect(self._on_recurrence_changed)
+        self.combo_recurrence_type.currentIndexChanged.connect(
+            self._on_recurrence_changed
+        )
 
         self._on_recurrence_changed()
 
@@ -174,7 +198,9 @@ class TaskCreateDialog(QDialog):
             target_day = self.input_to_date.date().toPyDate()
             current_weekday = target_day.weekday()
 
-            has_chacked = any(chk.isChecked() for chk in self.week_days_checkbox.values())
+            has_chacked = any(
+                chk.isChecked() for chk in self.week_days_checkbox.values()
+            )
 
             if not has_chacked:
                 self.week_days_checkbox[current_weekday].setChecked(True)
@@ -188,13 +214,9 @@ class TaskCreateDialog(QDialog):
             to_date_val = self.input_to_date.date().toPyDate()
 
             start_time_val = (
-                None
-                if is_all_day
-                else self.input_start_time.time().toPyTime()
+                None if is_all_day else self.input_start_time.time().toPyTime()
             )
-            end_time_val = (
-                None if is_all_day else self.input_end_time.time().toPyTime()
-            )
+            end_time_val = None if is_all_day else self.input_end_time.time().toPyTime()
 
             rec_type = self.combo_recurrence_type.currentData()
             rec_interval = self.input_interval.value()
@@ -228,8 +250,7 @@ class TaskCreateDialog(QDialog):
             QMessageBox.warning(
                 self,
                 'Validation Error',
-                'Please fix the following issues:\n\n'
-                + '\n'.join(error_messages),
+                'Please fix the following issues:\n\n' + '\n'.join(error_messages),
             )
         except Exception as e:
             QMessageBox.critical(self, 'Error', str(e))

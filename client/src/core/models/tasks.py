@@ -13,9 +13,7 @@ class Task(Base):
     __tablename__ = 'tasks'
 
     id: Mapped[str] = mapped_column(
-        String(36),
-        primary_key=True,
-        default=lambda: str(uuid.uuid4())
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
     )
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -27,9 +25,7 @@ class Task(Base):
     end_time: Mapped[Optional[time]] = mapped_column(Time, nullable=True)
 
     recurrence_type: Mapped[RecurrenceType] = mapped_column(
-        Enum(RecurrenceType),
-        default=RecurrenceType.NONE,
-        index=True
+        Enum(RecurrenceType), default=RecurrenceType.NONE, index=True
     )
 
     recurrence_interval: Mapped[int] = mapped_column(Integer, default=1)
@@ -48,17 +44,23 @@ class Task(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc)
+        onupdate=lambda: datetime.now(timezone.utc),
     )
 
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=lambda: datetime.now(timezone.utc)
+    )
 
 
 class TaskCompletion(Base):
     __tablename__ = 'task_completions'
 
-    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    task_id: Mapped[str] = mapped_column(ForeignKey('tasks.id'), nullable=False, index=True)
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    task_id: Mapped[str] = mapped_column(
+        ForeignKey('tasks.id'), nullable=False, index=True
+    )
     task: Mapped['Task'] = relationship('Task', back_populates='completions')
 
     date: Mapped[date] = mapped_column(Date, nullable=False)

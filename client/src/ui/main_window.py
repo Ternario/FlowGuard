@@ -3,7 +3,15 @@ from pathlib import Path
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QIcon, QAction
 from PyQt6.QtWidgets import (
-    QMainWindow, QWidget, QSystemTrayIcon, QMenu, QApplication, QHBoxLayout, QPushButton, QVBoxLayout, QSplitter
+    QMainWindow,
+    QWidget,
+    QSystemTrayIcon,
+    QMenu,
+    QApplication,
+    QHBoxLayout,
+    QPushButton,
+    QVBoxLayout,
+    QSplitter,
 )
 
 from src.ui.notifications.minimize_app import show_minimize_notification
@@ -22,9 +30,7 @@ class MainWindow(QMainWindow):
         self.is_exiting = False
 
         self.setWindowTitle('Flow Guard Desktop')
-        self.resize(
-            QApplication.primaryScreen().availableGeometry().size()
-        )
+        self.resize(QApplication.primaryScreen().availableGeometry().size())
 
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
@@ -83,7 +89,10 @@ class MainWindow(QMainWindow):
         self.tray_icon.show()
 
     def _on_tray_click(self, reason):
-        if reason == QSystemTrayIcon.ActivationReason.Trigger or reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+        if (
+            reason == QSystemTrayIcon.ActivationReason.Trigger
+            or reason == QSystemTrayIcon.ActivationReason.DoubleClick
+        ):
             self.show_normal()
 
     def show_normal(self):
@@ -96,14 +105,17 @@ class MainWindow(QMainWindow):
             return
 
         if hasattr(self, 'tray_icon') and self.tray_icon:
-
             if not self.hide_notification_showing:
                 self.hide_notification_showing = True
                 timeout: int = 5000
 
-                show_minimize_notification('FlouGuard', 'Flow Guard is still running in the background.')
+                show_minimize_notification(
+                    'FlouGuard', 'Flow Guard is still running in the background.'
+                )
 
-                QTimer.singleShot(timeout, lambda: setattr(self, 'hide_notification_showing', False))
+                QTimer.singleShot(
+                    timeout, lambda: setattr(self, 'hide_notification_showing', False)
+                )
             self.hide()
 
             event.ignore()
