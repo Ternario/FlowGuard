@@ -2,7 +2,9 @@
 target-version = "py314"
 
 [tool.ruff.format]
+
 quote-style = "single"
+
 docstring-code-format = false
 
 [tool.ruff.lint]
