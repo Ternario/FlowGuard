@@ -24,9 +24,7 @@ class Settings(BaseSettings):
     BASE_URL: str
     UPLOAD_DIR: Path = Path('static/app')
 
-    model_config = SettingsConfigDict(
-        env_file=('.env.database', '.env.server')
-    )
+    model_config = SettingsConfigDict(env_file=('.env.database', '.env.server'))
 
 
 settings = Settings()
