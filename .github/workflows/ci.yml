@@ -52,7 +52,7 @@ jobs:
         run: ruff check client/
 
       - name: Check Formatting Client
-        run: ruff format --check client
+        run: ruff format --check client/
 
       - name: Type Check Client
         run: mypy client/ --ignore-missing-import || true
