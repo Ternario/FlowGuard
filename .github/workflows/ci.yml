@@ -23,7 +23,7 @@ jobs:
             server:
              - 'server/**'
             frontend:
-             - frontend/**
+             - 'frontend/**'
 
   check-client:
     name: Check Client Code
@@ -61,6 +61,7 @@ jobs:
       - name: Run Client Tests
         run: |
           xvfb-run --auto-servernum pytest client/ || echo "No tests found yet"
+      
 
   check-server:
     name: Check Server Code
@@ -91,6 +92,27 @@ jobs:
 
       - name: Run Server Tests
         run: pytest server/ || echo "No tests found yet"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Meta for test
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: flowguard-server/test
+          tags: type=sha
+
+      - name: Test Docker build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
   
   check-frontend:
     name: Check Frontend Code
@@ -125,4 +147,25 @@ jobs:
       - name: Run Frontend Tests
         working-directory: ./frontend
         run: npm run test || echo "No tests found yet"
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Meta for test
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: flowguard-frontend/test
+          tags: type=sha
+
+      - name: Test Docker build
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/prod.Dockerfile
+          push: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
         
