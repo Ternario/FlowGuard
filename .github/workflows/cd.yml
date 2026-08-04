@@ -45,7 +45,7 @@ jobs:
         id: meta_server
         uses: docker/metadata-action@v5
         with: 
-          images: ${{ sevrets.DOCKERHUB_USERNAME }}/flowguard-server
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/flowguard-server
           tags: |
             type=raw,value=latest
             type=sha,prefix=main-,format=short 
@@ -57,7 +57,7 @@ jobs:
           file: ./server/Dockerfile
           push: true
           tags: ${{ steps.metadata_server.outputs.tags }}
-          label: ${{ seps.metadata_server.outputs.lables }}
+          label: ${{ steps.metadata_server.outputs.lables }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
