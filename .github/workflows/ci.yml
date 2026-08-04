@@ -1,14 +1,12 @@
 name: CI Pipeline
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
 jobs:
   changes:
-    name: Detect Changes
+    name: Detect Changes CI
     runs-on: ubuntu-latest
     outputs:
       client: ${{ steps.filter.outputs.client }}
