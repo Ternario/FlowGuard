@@ -1,4 +1,15 @@
 services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: dev.Dockerfile
+    restart: always
+    ports:
+      - "5173:5173"
+    volumes:
+      - /app/node_modules
+      - ./frontend:/app
+
   server:
     build: ./server
     restart: always
@@ -14,7 +25,7 @@ services:
       - server/.env.server
 
   mysql:
-    image: mysql
+    image: mysql:8.4
     restart: always
     env_file:
       - server/.env.database

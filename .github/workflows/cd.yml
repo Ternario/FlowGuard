@@ -5,7 +5,66 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build_and_push:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      server: ${{ steps.filter.outputs.server }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            server:
+            - 'server/**'
+            frontend:
+            - 'frontend/**'
+  
+
+  build_and_push_server:
+    name: Build and push server
+    needs: changes
+    if: ${{ needs.changes.outputs.server == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker Meta for server
+        id: meta_server
+        uses: docker/metadata-action@v5
+        with: 
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/flowguard-server
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=main-,format=short 
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          file: ./server/Dockerfile
+          push: true
+          tags: ${{ steps.metadata_server.outputs.tags }}
+          label: ${{ steps.metadata_server.outputs.lables }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build_and_push_frontend:
+    name: build and push frontend
+    needs: changes
+    if: ${{ needs.changes.outputs.frontend == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
@@ -17,14 +76,26 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Set up Docker Build
+      
+      - name: Set up Docker Duildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Docker Meta for frontend
+        id: meta_frontend
+        uses: docker/metadata-action@v3
+        with: 
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/flowguard-frontend
+          tags: |
+            type=raw,value=latest
+            type=sha,prefix=main-,fromat=short
+      
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./server
-          file: ./server/Dockerfile
+          context: ./frontend
+          file: ./fr/prod.Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/flowguard:latest
+          tags: ${{ steps.metadata_frontend.outputs.tags }}
+          label: ${{ steps.metadata_frontend.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
