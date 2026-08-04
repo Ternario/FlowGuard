@@ -109,7 +109,8 @@ jobs:
           cache-dependency-path: 'frontend/package-lock.json'
         
       - name: Install Frontend Dependencies
-        run: npm ci /frontend
+        working-directory: ./frontend
+        run: npm ci
 
       - name: Lint Frontend Code
         working-directory: ./frontend
