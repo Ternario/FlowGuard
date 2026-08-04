@@ -49,9 +49,6 @@ jobs:
           tags: |
             type=raw,value=latest
             type=sha,prefix=main-,format=short 
-      
-      - name: Debug tags
-        run: echo "Generated tags are '${{ steps.meta_server.outputs.tags }}'"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
