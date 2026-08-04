@@ -56,8 +56,8 @@ jobs:
           context: ./server
           file: ./server/Dockerfile
           push: true
-          tags: ${{ steps.metadata_server.outputs.tags }}
-          labels: ${{ steps.metadata_server.outputs.lables }}
+          tags: ${{ steps.meta_server.outputs.tags }}
+          labels: ${{ steps.meta_server.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -95,7 +95,7 @@ jobs:
           context: ./frontend
           file: ./fr/prod.Dockerfile
           push: true
-          tags: ${{ steps.metadata_frontend.outputs.tags }}
-          labels: ${{ steps.metadata_frontend.outputs.labels }}
+          tags: ${{ steps.meta_frontend.outputs.tags }}
+          labels: ${{ steps.meta_frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
