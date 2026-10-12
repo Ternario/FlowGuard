@@ -14,14 +14,16 @@ from PyQt6.QtWidgets import (
     QSplitter,
 )
 
-from src.ui.notifications.minimize_app import show_minimize_notification
+from src.core.notifications.minimize_app import show_minimize_notification
 
 from src.ui.widgets.sidebar import Sidebar
 from src.ui.widgets.task_list import TaskList
+from src.ui.utils.widget_navigate import NavWidget
+from src.utils.enum_choices.menu_title import MenuTitle
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, session_factory):
+    def __init__(self, session_factory) -> None:
         super().__init__()
 
         self.setAttribute(Qt.WidgetAttribute.WA_QuitOnClose, True)
@@ -30,29 +32,53 @@ class MainWindow(QMainWindow):
         self.is_exiting = False
 
         self.setWindowTitle('Flow Guard Desktop')
-        self.resize(QApplication.primaryScreen().availableGeometry().size())
+
+        screen = QApplication.primaryScreen()
+        if screen is not None:
+            self.resize(screen.availableGeometry().size())
+        else:
+            self.resize(1200, 800)
 
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         main_layout = QVBoxLayout(main_widget)
+
         splitter = QSplitter()
 
         sidebar = Sidebar()
-        task_list = TaskList(session_factory=self.session_factory)
+
+        self.container = NavWidget(duration=250)
+
+        self.task_list = TaskList(session_factory=self.session_factory)
+        # self.analytics = Analytics()
+        # self.settings = Settings()
+
+        self.container.addWidget(self.task_list)
+        # self.container.addWidget(self.analytics)
+        # self.container.addWidget(self.settings)
 
         splitter.addWidget(sidebar)
-        splitter.addWidget(task_list)
+        splitter.addWidget(self.container)
         main_layout.addWidget(splitter)
+
+        self.routes = {
+            MenuTitle.TODAY.value: (self.task_list, MenuTitle.TODAY.value),
+            MenuTitle.ALL.value: (self.task_list, MenuTitle.ALL.value),
+            # MenuTitle.ANALYTICS : (self.analytics, MenuTitle.ANALYTICS),
+            # MenuTitle.SETTINGS : (self.settings, MenuTitle.SETTINGS),
+        }
+
+        sidebar.page.connect(self.handle_navigate)
 
         bottom_layout = QHBoxLayout()
 
         exit_button = QPushButton('Exit')
-        exit_button.setFixedWidth(90)
-        exit_button.setFixedHeight(30)
+        exit_button.setFixedWidth(100)
+        exit_button.setFixedHeight(40)
         exit_button.setStyleSheet(
             """
             QPushButton {
-                background-color: red; color: white; font-weight: bold; padding: 4px 12px; border-radius: 4px;
+                background-color: #F41515; color: #FFFFFF; font-weight: bold; padding: 4px 12px; border-radius: 4px;
             }
             QPushButton:hover {background-color: #1b5e20;}
             """
@@ -67,10 +93,21 @@ class MainWindow(QMainWindow):
 
         self._setup_try()
 
-    def _setup_try(self):
+    def handle_navigate(self, route: str) -> None:
+        if route not in self.routes:
+            return
+
+        target_widget, page = self.routes[route]
+
+        if page and hasattr(target_widget, 'set_page'):
+            target_widget.set_page(page)
+        else:
+            self.container.slide_to_index(target_widget)
+
+    def _setup_try(self) -> None:
         self.tray_icon = QSystemTrayIcon(self)
         base_path = Path(__file__).resolve().parent.parent.parent
-        icon_path = base_path / 'main_icon.png'
+        icon_path = base_path / 'static' / 'icons' / 'main_icon.png'
         self.tray_icon.setIcon(QIcon(str(icon_path)))
 
         tray_menu = QMenu()
@@ -88,18 +125,15 @@ class MainWindow(QMainWindow):
         self.tray_icon.activated.connect(self._on_tray_click)
         self.tray_icon.show()
 
-    def _on_tray_click(self, reason):
-        if (
-            reason == QSystemTrayIcon.ActivationReason.Trigger
-            or reason == QSystemTrayIcon.ActivationReason.DoubleClick
-        ):
+    def _on_tray_click(self, reason) -> None:
+        if reason == QSystemTrayIcon.ActivationReason.Trigger or reason == QSystemTrayIcon.ActivationReason.DoubleClick:
             self.show_normal()
 
-    def show_normal(self):
+    def show_normal(self) -> None:
         self.showNormal()
         self.activateWindow()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         if self.is_exiting:
             event.accept()
             return
@@ -109,20 +143,16 @@ class MainWindow(QMainWindow):
                 self.hide_notification_showing = True
                 timeout: int = 5000
 
-                show_minimize_notification(
-                    'FlouGuard', 'Flow Guard is still running in the background.'
-                )
+                show_minimize_notification('FlouGuard', 'Flow Guard is still running in the background.')
 
-                QTimer.singleShot(
-                    timeout, lambda: setattr(self, 'hide_notification_showing', False)
-                )
+                QTimer.singleShot(timeout, lambda: setattr(self, 'hide_notification_showing', False))
             self.hide()
 
             event.ignore()
         else:
             event.accept()
 
-    def force_exit(self):
+    def force_exit(self) -> None:
         self.is_exiting = True
         # self.monitor_worker.stop()
         # self.sync_worker.stop()

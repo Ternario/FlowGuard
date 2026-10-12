@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, time
 
 from typing import List, Optional
 
@@ -10,10 +10,10 @@ from src.core.schemas.tasks import (
     TaskCreate,
     TaskResponse,
     TaskUpdate,
-    TaskListResponse,
     TaskWithCompletionResponse,
     TaskCompletionResponse,
 )
+from src.utils.enum_choices.task_status import TaskStatus
 
 
 class TaskService:
@@ -53,6 +53,9 @@ class TaskService:
 
         if task.recurrence_type == RecurrenceType.DAILY:
             delta_days = (target_date - task.to_date).days
+            if not task.recurrence_interval:
+                return False
+
             return delta_days % task.recurrence_interval == 0
 
         if task.recurrence_type == RecurrenceType.WEEKLY:
@@ -63,7 +66,7 @@ class TaskService:
 
         return False
 
-    def _get_task_by_id(self, task_id: str) -> Optional[Task]:
+    def _get_task_by_id(self, task_id: str) -> Task:
         task: Optional[Task] = self.db.scalar(select(Task).where(Task.id == task_id))
 
         if not task:
@@ -71,9 +74,7 @@ class TaskService:
 
         return task
 
-    def _get_task_completion_by_id_and_date(
-        self, task_id: str, target_date: date
-    ) -> Optional[TaskCompletion]:
+    def _get_task_completion_by_id_and_date(self, task_id: str, target_date: date) -> Optional[TaskCompletion]:
         return self.db.scalar(
             select(TaskCompletion).where(
                 TaskCompletion.task_id == task_id,
@@ -112,7 +113,7 @@ class TaskService:
         Raises:
             ValueError: If no task matches the provided task_id.
         """
-        task: Optional[Task] = self._get_task_by_id(task_id)
+        task: Task = self._get_task_by_id(task_id)
 
         update_data = schema.model_dump(exclude_unset=True)
         for k, v in update_data.items():
@@ -125,7 +126,7 @@ class TaskService:
 
         return TaskResponse.model_validate(task)
 
-    def update_task_active_status(self, task_id: str) -> TaskResponse:
+    def deactivate_task_status(self, task_id: str) -> TaskResponse:
         """
         Deactivates a task, effectively hiding it from active task lists.
 
@@ -138,9 +139,45 @@ class TaskService:
         Raises:
             ValueError: If no task matches the provided task_id.
         """
-        task: Optional[Task] = self._get_task_by_id(task_id)
+        task: Task = self._get_task_by_id(task_id)
+
+        if not task.is_active:
+            raise ValueError(f'Task is already deactivated')
 
         task.is_active = False
+        task.is_synced = False
+
+        self.db.commit()
+        self.db.refresh(task)
+
+        return TaskResponse.model_validate(task)
+
+    def activate_task_status(self, task_id: str) -> TaskResponse:
+        """
+        Activates the task, effectively returning it to the list of active tasks,
+         provided that the recurrence_end_date is not in the past.
+
+        Args:
+            task_id (str): Unique identifier of the task to deactivate.
+
+        Returns:
+            TaskResponse: Updated task data reflecting Activated status.
+
+        Raises:
+            ValueError: If no task matches the provided task_id.
+        """
+        task: Task = self._get_task_by_id(task_id)
+
+        if task.is_active:
+            raise ValueError(f'Task is already active')
+
+        if task.recurrence_end_date and task.recurrence_end_date < date.today():
+            raise ValueError(f"The date of the task's recurrence is already in the past")
+
+        if not task.recurrence_end_date and task.to_date < date.today():
+            raise ValueError(f"The date of the task's recurrence is already in the past")
+
+        task.is_active = True
         task.is_synced = False
 
         self.db.commit()
@@ -166,7 +203,7 @@ class TaskService:
         self.db.delete(task)
         self.db.commit()
 
-    def get_task_list(self, status: Optional[bool] = None) -> List[TaskListResponse]:
+    def get_task_list(self, status: Optional[TaskStatus] = None) -> List[TaskResponse]:
         """
         Fetches all tasks, with optional filtering by active status.
 
@@ -175,19 +212,21 @@ class TaskService:
                     If None, retrieves all tasks regardless of status.
 
         Returns:
-            List[TaskListResponse]: Collection of matching task representations.
+            List[TaskResponse]: Collection of matching task representations.
         """
         task_query = select(Task)
 
-        if isinstance(status, bool):
-            task_query = task_query.where(Task.is_active == status)
+        if status == TaskStatus.ACTIVE:
+            task_query = task_query.where(Task.is_active == True)
+        elif status == TaskStatus.INACTIVE:
+            task_query = task_query.where(Task.is_active == False)
 
         task_list = self.db.scalars(task_query).all()
 
         if not task_list:
             return []
 
-        return [TaskListResponse.model_validate(task) for task in task_list]
+        return [TaskResponse.model_validate(task) for task in task_list]
 
     def get_task_by_id(self, task_id: str) -> TaskResponse:
         """
@@ -206,9 +245,7 @@ class TaskService:
 
         return TaskResponse.model_validate(task)
 
-    def get_task_actual_list(
-        self, target_date: date
-    ) -> List[TaskWithCompletionResponse]:
+    def get_task_actual_list(self, target_date: date) -> List[TaskWithCompletionResponse]:
         """
         Retrieves all active tasks scheduled for a given date with completion states.
 
@@ -244,11 +281,7 @@ class TaskService:
         if not validated_tasks:
             return []
 
-        active_tasks = [
-            task
-            for task in validated_tasks
-            if self._check_recurrence_math(task, target_date)
-        ]
+        active_tasks = [task for task in validated_tasks if self._check_recurrence_math(task, target_date)]
 
         if not active_tasks:
             return []
@@ -269,11 +302,11 @@ class TaskService:
         for task in active_tasks:
             completion = task_completions_map.get(task.id)
 
-            result.append(
-                TaskWithCompletionResponse.model_validate(task).model_copy(
-                    update={'completions': completion}
-                )
-            )
+            task_response = TaskWithCompletionResponse.model_validate(task)
+
+            task_response.completion = TaskCompletionResponse.model_validate(completion) if completion else None
+
+            result.append(task_response)
 
         return result
 
@@ -295,23 +328,23 @@ class TaskService:
         Raises:
             ValueError: If no task matches the provided task_id.
         """
-        # is correct request and checking?
         self._get_task_by_id(task_id)
 
-        completion: Optional[TaskCompletion] = self._get_task_completion_by_id_and_date(
-            task_id, target_date
-        )
+        completion: Optional[TaskCompletion] = self._get_task_completion_by_id_and_date(task_id, target_date)
 
-        current_datetime: datetime = datetime.now(timezone.utc)
+        current_datetime: time = datetime.now().time()
 
         if completion:
+            if completion.is_started:
+                raise ValueError('Task is already started')
+
             completion.is_started = True
             if not completion.started_at:
                 completion.started_at = current_datetime
 
             completion.is_synced = False
         else:
-            completion: TaskCompletion = TaskCompletion(
+            completion = TaskCompletion(
                 task_id=task_id,
                 date=target_date,
                 is_started=True,
@@ -344,15 +377,16 @@ class TaskService:
         """
         self._get_task_by_id(task_id)
 
-        completion: Optional[TaskCompletion] = self._get_task_completion_by_id_and_date(
-            task_id, target_date
-        )
+        completion: Optional[TaskCompletion] = self._get_task_completion_by_id_and_date(task_id, target_date)
 
         if not completion or not completion.is_started:
             raise ValueError('You cannot complete a task that has not been started')
 
+        if completion.is_completed:
+            raise ValueError('Task is already completed')
+
         completion.is_completed = True
-        completion.completed_at = datetime.now(timezone.utc)
+        completion.completed_at = datetime.now().time()
         completion.is_synced = False
 
         self.db.commit()

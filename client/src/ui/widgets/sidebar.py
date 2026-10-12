@@ -1,11 +1,14 @@
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QListWidget
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton
+
+from src.utils.enum_choices.menu_title import MenuTitle
 
 
 class Sidebar(QWidget):
+    page = pyqtSignal(str)
+
     def __init__(self, parent=None):
         super().__init__(parent)
-
-        self.setFixedWidth(200)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 10, 10, 10)
@@ -14,21 +17,20 @@ class Sidebar(QWidget):
         title.setStyleSheet('font-size: 20px; font-weight: bold;')
         layout.addWidget(title)
 
-        self.menu_list = QListWidget()
-        self.menu_list.addItem("Today's Tasks")
-        self.menu_list.addItem('Tasks')
-        self.menu_list.addItem('Analytics (Soon)')
-        self.menu_list.addItem('Settings (Soon)')
-        self.menu_list.setCurrentRow(0)
-        self.menu_list.setStyleSheet("""
-            QListWidget::item {
-                border-bottom: 1px solid #555555;
-                padding: 10px;
-            }
+        self.btn_td_tasks = QPushButton("Today's tasks")
+        self.btn_tasks = QPushButton('Tasks')
+        self.btn_analytics = QPushButton('Analytics (Soon)')
+        self.btn_settings = QPushButton('Settings (Soon)')
 
-            QListWidget::item:selected {
-                background-color: transparent;
-            }
-        """)
+        self.btn_td_tasks.clicked.connect(lambda: self.page.emit(MenuTitle.TODAY.value))
+        self.btn_tasks.clicked.connect(lambda: self.page.emit(MenuTitle.ALL.value))
+        self.btn_analytics.clicked.connect(lambda: self.page.emit(MenuTitle.ANALYTICS.value))
+        self.btn_settings.clicked.connect(lambda: self.page.emit(MenuTitle.SETTINGS.value))
 
-        layout.addWidget(self.menu_list)
+        layout.addWidget(self.btn_td_tasks)
+        layout.addWidget(self.btn_tasks)
+        layout.addWidget(self.btn_analytics)
+
+        layout.addStretch()
+
+        layout.addWidget(self.btn_settings)

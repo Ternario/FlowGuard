@@ -1,5 +1,6 @@
 [tool.ruff]
 target-version = "py314"
+line-length = 120
 
 [tool.ruff.format]
 quote-style = "single"
@@ -13,3 +14,7 @@ inline-quotes = "single"
 docstring-quotes = "double"
 multiline-quotes = "double"
 avoid-escape = true
+
+[[tool.mypy.overrides]]
+module = "notifypy.*"
+ignore_missing_imports = true

@@ -11,12 +11,12 @@ grpcio-tools==1.82.1
 iniconfig==2.3.0
 jeepney==0.9.0
 librt==0.13.0
-loguru==0.6.0
+loguru
 Mako==1.3.12
 MarkupSafe==3.0.3
 mypy==2.3.0
 mypy_extensions==1.1.0
-notify_py==0.3.43
+notify_py
 packaging==26.2
 pathspec==1.1.1
 pluggy==1.6.0
@@ -30,6 +30,7 @@ PyQt6==6.11.0
 PyQt6-Qt6==6.11.1
 PyQt6_sip==13.11.1
 pytest==9.1.1
+pytest-qt==4.5.0
 python-dotenv==1.2.2
 ruff==0.16.0
 setuptools==83.0.0

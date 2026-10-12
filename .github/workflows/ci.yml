@@ -39,10 +39,23 @@ jobs:
           cache: 'pip'
           cache-dependency-path: 'client/requirements.txt'
 
-      - name: Install System GUI Dependencies
+      - name: Install System GUI & XCB Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y libegl1 libgl1-mesa-dev libxkbcommon-x11-0 xvfb
+          sudo apt-get install -y \
+          libgl1-mesa-dev \
+          libegl1 \
+          libxkbcommon-x11-0 \
+          libxcb-cursor0 \
+          libxcb-icccm4 \
+          libxcb-image0 \
+          libxcb-keysyms1 \
+          libxcb-randr0 \
+          libxcb-render-util0 \
+          libxcb-shape0 \
+          libxcb-xfixes0 \
+          libxcb-xinerama0 \
+          xvfb
 
       - name: Install Client Dependencies
         run: |
@@ -56,11 +69,11 @@ jobs:
         run: ruff format --check client/
 
       - name: Type Check Client
-        run: mypy client/ --ignore-missing-import || true
+        run: mypy client/ --ignore-missing-imports || true
 
       - name: Run Client Tests
         run: |
-          xvfb-run --auto-servernum pytest client/ || echo "No tests found yet"
+          xvfb-run --auto-servernum pytest client/tests/ || echo "No tests found yet"
       
 
   check-server:

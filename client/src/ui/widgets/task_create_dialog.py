@@ -24,13 +24,14 @@ from pydantic import ValidationError
 
 from src.core.schemas.tasks import TaskCreate as TaskCreateSchema
 from src.utils.enum_choices.recurrence_type import RecurrenceType
+from src.utils.enum_choices.week_days import WeekDays
 
 
 class TaskCreateDialog(QDialog):
     def __init__(self, initial_date: Optional[date] = None, parent=None):
         super().__init__(parent)
         self.setWindowTitle('Create New Task')
-        self.resize(450, 500)
+        self.resize(600, 400)
 
         self.created_task_data: Optional[TaskCreateSchema] = None
         self._initial_date = initial_date or date.today()
@@ -56,6 +57,7 @@ class TaskCreateDialog(QDialog):
         self.input_to_date = QDateEdit()
         self.input_to_date.setCalendarPopup(True)
         self.input_to_date.setDisplayFormat('dd.MM.yyyy')
+        self.input_to_date.setMinimumDate(QDate.currentDate())
         self.input_to_date.setDate(
             QDate(
                 self._initial_date.year,
@@ -114,19 +116,10 @@ class TaskCreateDialog(QDialog):
         weekly_layout.setContentsMargins(0, 0, 0, 0)
 
         self.week_days_checkbox = {}
-        days_names = [
-            ('Mon', 0),
-            ('Tue', 1),
-            ('Wed', 2),
-            ('Thu', 3),
-            ('Fri', 4),
-            ('Sat', 5),
-            ('Sun', 6),
-        ]
 
-        for name, day_num in days_names:
-            chk = QCheckBox(name)
-            self.week_days_checkbox[day_num] = chk
+        for day in WeekDays:
+            chk = QCheckBox(day.name.title())
+            self.week_days_checkbox[day.value] = chk
             weekly_layout.addWidget(chk)
 
         weekly_layout.addStretch()
@@ -152,20 +145,30 @@ class TaskCreateDialog(QDialog):
         main_layout.addLayout(form_layout)
         main_layout.addStretch()
 
-        self.combo_recurrence_type.currentIndexChanged.connect(
-            self._on_recurrence_changed
-        )
+        self.combo_recurrence_type.currentIndexChanged.connect(self._on_recurrence_changed)
 
         self._on_recurrence_changed()
 
         btn_layout = QHBoxLayout()
         btn_cancel = QPushButton('Cancel')
+        btn_cancel.setStyleSheet(
+            """
+            QPushButton { 
+                background-color: #F41515; color: #FFFFFF; font-weight: bold; 
+                padding: 6px 14px; border-radius: 4px; 
+                }
+            QPushButton:hover { background-color: #1b5e20; }
+            """
+        )
         btn_cancel.clicked.connect(self.reject)
 
         btn_save = QPushButton('Create Task')
         btn_save.setStyleSheet(
             """
-            QPushButton { background-color: #2e7d32; color: white; font-weight: bold; padding: 6px 14px; border-radius: 4px; }
+            QPushButton { 
+                background-color: #1E3AB8; color: #FFFFFF; font-weight: bold; 
+                padding: 6px 14px; border-radius: 4px; 
+                }
             QPushButton:hover { background-color: #1b5e20; }
             """
         )
@@ -177,11 +180,11 @@ class TaskCreateDialog(QDialog):
 
         main_layout.addLayout(btn_layout)
 
-    def _on_all_day_toggled(self, is_checked: bool):
+    def _on_all_day_toggled(self, is_checked: bool) -> None:
         self.input_start_time.setEnabled(not is_checked)
         self.input_end_time.setEnabled(not is_checked)
 
-    def _on_recurrence_changed(self):
+    def _on_recurrence_changed(self) -> None:
         selected_type = self.combo_recurrence_type.currentData()
 
         if selected_type == RecurrenceType.NONE:
@@ -198,14 +201,12 @@ class TaskCreateDialog(QDialog):
             target_day = self.input_to_date.date().toPyDate()
             current_weekday = target_day.weekday()
 
-            has_chacked = any(
-                chk.isChecked() for chk in self.week_days_checkbox.values()
-            )
+            has_chacked = any(chk.isChecked() for chk in self.week_days_checkbox.values())
 
             if not has_chacked:
                 self.week_days_checkbox[current_weekday].setChecked(True)
 
-    def _on_save(self):
+    def _on_save(self) -> None:
         try:
             title = self.input_title.text().strip()
             desc = self.input_description.toPlainText().strip() or None
@@ -213,17 +214,20 @@ class TaskCreateDialog(QDialog):
             is_all_day = self.chk_is_all_day.isChecked()
             to_date_val = self.input_to_date.date().toPyDate()
 
-            start_time_val = (
-                None if is_all_day else self.input_start_time.time().toPyTime()
-            )
+            start_time_val = None if is_all_day else self.input_start_time.time().toPyTime()
+
             end_time_val = None if is_all_day else self.input_end_time.time().toPyTime()
 
             rec_type = self.combo_recurrence_type.currentData()
-            rec_interval = self.input_interval.value()
+            rec_interval = self.input_interval.value() if rec_type == RecurrenceType.DAILY else None
 
-            rec_end_date_val = None
-            if rec_type != RecurrenceType.NONE:
-                rec_end_date_val = self.input_rec_end_date.date().toPyDate()
+            rec_days = (
+                ','.join(str(day) for day, chk in self.week_days_checkbox.items() if chk.isChecked())
+                if rec_type == RecurrenceType.WEEKLY
+                else None
+            )
+
+            rec_end_date_val = None if rec_type == RecurrenceType.NONE else self.input_rec_end_date.date().toPyDate()
 
             task_dto = TaskCreateSchema(
                 title=title,
@@ -234,6 +238,7 @@ class TaskCreateDialog(QDialog):
                 end_time=end_time_val,
                 recurrence_type=rec_type,
                 recurrence_interval=rec_interval,
+                recurrence_days=rec_days,
                 recurrence_end_date=rec_end_date_val,
             )
 
