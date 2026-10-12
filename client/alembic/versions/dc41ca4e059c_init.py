@@ -1,8 +1,8 @@
 """init
 
-Revision ID: b01329d86932
+Revision ID: dc41ca4e059c
 Revises:
-Create Date: 2026-07-30 16:40:53.334632
+Create Date: 2026-09-16 22:28:49.670568
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'b01329d86932'
+revision: str = 'dc41ca4e059c'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -28,15 +28,11 @@ def upgrade() -> None:
         sa.Column('title', sa.String(length=255), nullable=False),
         sa.Column('description', sa.String(length=2000), nullable=True),
         sa.Column('is_all_day', sa.Boolean(), nullable=False),
-        sa.Column('to_date', sa.Date(), nullable=True),
+        sa.Column('to_date', sa.Date(), nullable=False),
         sa.Column('start_time', sa.Time(), nullable=True),
         sa.Column('end_time', sa.Time(), nullable=True),
-        sa.Column(
-            'recurrence_type',
-            sa.Enum('NONE', 'DAILY', 'WEEKLY', name='recurrencetype'),
-            nullable=False,
-        ),
-        sa.Column('recurrence_interval', sa.Integer(), nullable=False),
+        sa.Column('recurrence_type', sa.Enum('NONE', 'DAILY', 'WEEKLY', name='recurrencetype'), nullable=False),
+        sa.Column('recurrence_interval', sa.Integer(), nullable=True),
         sa.Column('recurrence_days', sa.String(length=50), nullable=True),
         sa.Column('recurrence_end_date', sa.Date(), nullable=True),
         sa.Column('is_active', sa.Boolean(), nullable=False),
@@ -46,9 +42,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id'),
     )
     with op.batch_alter_table('tasks', schema=None) as batch_op:
-        batch_op.create_index(
-            batch_op.f('ix_tasks_recurrence_type'), ['recurrence_type'], unique=False
-        )
+        batch_op.create_index(batch_op.f('ix_tasks_recurrence_type'), ['recurrence_type'], unique=False)
 
     op.create_table(
         'task_completions',
@@ -56,20 +50,19 @@ def upgrade() -> None:
         sa.Column('task_id', sa.String(length=36), nullable=False),
         sa.Column('date', sa.Date(), nullable=False),
         sa.Column('is_started', sa.Boolean(), nullable=False),
-        sa.Column('started_at', sa.DateTime(), nullable=True),
+        sa.Column('started_at', sa.Time(), nullable=True),
         sa.Column('is_completed', sa.Boolean(), nullable=False),
-        sa.Column('completed_at', sa.DateTime(), nullable=True),
+        sa.Column('completed_at', sa.Time(), nullable=True),
         sa.Column('is_synced', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
             ['task_id'],
             ['tasks.id'],
         ),
         sa.PrimaryKeyConstraint('id'),
+        sa.UniqueConstraint('task_id', 'date', name='unique_task_completion_date'),
     )
     with op.batch_alter_table('task_completions', schema=None) as batch_op:
-        batch_op.create_index(
-            batch_op.f('ix_task_completions_task_id'), ['task_id'], unique=False
-        )
+        batch_op.create_index(batch_op.f('ix_task_completions_task_id'), ['task_id'], unique=False)
 
     # ### end Alembic commands ###
 

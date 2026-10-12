@@ -56,11 +56,11 @@ jobs:
         run: ruff format --check client/
 
       - name: Type Check Client
-        run: mypy client/ --ignore-missing-import || true
+        run: mypy client/ --ignore-missing-imports || true
 
       - name: Run Client Tests
         run: |
-          xvfb-run --auto-servernum pytest client/ || echo "No tests found yet"
+          xvfb-run --auto-servernum pytest client/tests/ || echo "No tests found yet"
       
 
   check-server:

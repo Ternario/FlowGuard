@@ -43,8 +43,14 @@ class HeaderDate(QWidget):
         self._update_ui()
 
     def _update_ui(self):
-        day_str = self.current_date.strftime('%A, %d.%m.%Y')
-        self.label.setText(day_str)
+
+        if self.current_date == date.today():
+            day_str = self.current_date.strftime('%A, %d.%m.%Y')
+            self.label.setText(day_str)
+            self.label.show()
+        else:
+            self.label.hide()
+
         self.date_picker.blockSignals(True)
 
         q_date = QDate(

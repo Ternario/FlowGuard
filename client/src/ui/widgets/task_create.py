@@ -23,8 +23,8 @@ class TaskCreate(QWidget):
         self.btn_add.setStyleSheet(
             """
             QPushButton { 
-                background-color: #1976d2; 
-                color: white; 
+                background-color: #1E3AB8; 
+                color: #FFFFFF; 
                 font-size: 14px;
                 font-weight: bold; 
                 padding: 8px 16px; 
